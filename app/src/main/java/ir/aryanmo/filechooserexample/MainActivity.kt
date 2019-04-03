@@ -2,7 +2,6 @@ package ir.aryanmo.filechooserexample
 
 import android.content.Intent
 import android.graphics.Bitmap
-import android.media.MediaPlayer
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -17,7 +16,6 @@ import ir.aryanmo.filepicker.Utils.FileUtils
 
 
 class MainActivity : AppCompatActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -25,7 +23,7 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, a.size.toString(), Toast.LENGTH_LONG).show()
 
         text.setOnClickListener {
-            FilePicker.openFileManager(this, true, null, arrayListOf(FilePicker.VIDEO_TYPE))
+            FilePicker.openFileManager(this, true, null, arrayListOf(FilePicker.OPEN_CAMERA_FOR_PHOTO))
         }
 
         image.setOnClickListener {
@@ -55,25 +53,21 @@ class MainActivity : AppCompatActivity() {
                 Log.e("Aryan", "File name -> ${f.name}")
                 Log.e("Aryan", "File nameWithoutExtension -> ${f.nameWithoutExtension}")
 
-                FileUtils.launchVideo(this@MainActivity, uri.path)
+//                FileUtils.launchVideo(this@MainActivity, uri.path)
             }
 
             override fun onFileSelectorResult(uris: ArrayList<Uri>) {
                 super.onFileSelectorResult(uris)
 
                 for (i in 0 until uris.size) {
-
-                    Log.e("aryan", "uri.path -> ${uris[i].path}")
                     if (FileUtils.isImageFile(this@MainActivity, uris[i])) {
                         image.visibility = View.VISIBLE
                         image.setImageBitmap(FileUtils.uriToBitmap(this@MainActivity, uris[i]))
-                        FileUtils.launchImage(this@MainActivity, uris[i])
-
                     }
 
                     if (FileUtils.isVideoFile(this@MainActivity, uris[i])) {
-                        Log.e("Ari",uris[i].path)
-                        Log.e("Ari",FileUtils.getPathFromUri(this@MainActivity,uris[i]))
+                        Log.e("Ari", uris[i].path)
+                        Log.e("Ari", FileUtils.getPathFromUri(this@MainActivity, uris[i]))
                         FileUtils.launchVideo(this@MainActivity, uris[i])
                     }
 

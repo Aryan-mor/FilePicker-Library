@@ -9,22 +9,25 @@ import android.util.Log
 import android.os.Build
 import java.io.File
 import ir.aryanmo.filepicker.Utils.FileUtils
+import android.provider.MediaStore.Images
+import java.io.ByteArrayOutputStream
+import java.util.*
 
 
 object FilePicker {
     open val OPEN_CAMERA_FOR_PHOTO = 1100
     open val OPEN_CAMERA_FOR_VIDEO = 1200
-    open val OPEN_GALLERY = 1300
+    private val OPEN_GALLERY = 1300
 
 
     open val ANY_TYPE = 1010
     open val IMAGE_TYPE = 1011
     open val VIDEO_TYPE = 1012
     open val AUDIO_TYPE = 1013
+    open val CROP_IMAGE = 1014
 
     fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?, selectorResult: FileChooserResultListener) {
         try {
-
             if (resultCode != Activity.RESULT_OK)
                 return
 
@@ -42,6 +45,7 @@ object FilePicker {
                     selectorResult.onCameraVideoResult(Uri.fromFile(File(path)))
                 }
                 OPEN_GALLERY -> {
+
                     val result = arrayListOf<Uri>()
                     try {
                         if (null != data!!.clipData) {
@@ -113,13 +117,36 @@ object FilePicker {
                 chooserIntent = Intent.createChooser(intent, title)
             }
 
-
-
             activity.startActivityForResult(chooserIntent, OPEN_GALLERY)
 
         } catch (e: Exception) {
             logError("openFileManager", e)
         }
+    }
+
+    fun cropImage(activity: Activity, uri: Uri){
+        val cropIntent = Intent("com.android.camera.action.CROP")
+
+        cropIntent.setDataAndType(uri, "image/*")
+        //set crop properties
+        cropIntent.putExtra("crop", "true")
+        //indicate aspect of desired crop
+        cropIntent.putExtra("aspectX", 4)
+        cropIntent.putExtra("aspectY", 3)
+        //indicate output X and Y
+        cropIntent.putExtra("outputX", 800)
+        cropIntent.putExtra("outputY", 800)
+        //retrieve data on return
+        cropIntent.putExtra("return-data", true)
+        //start the activity - we handle returning in onActivityResult)
+        activity.startActivityForResult(cropIntent, OPEN_CAMERA_FOR_PHOTO)
+    }
+
+    fun cropImage(activity: Activity, bitmap: Bitmap){
+        val bytes = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, bytes)
+        val path = Images.Media.insertImage(activity.contentResolver, bitmap, "cropImage${System.currentTimeMillis()/1000}", null)
+        return FilePicker.cropImage(activity,Uri.parse(path))
     }
 
     private fun isKitKat(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
@@ -174,6 +201,8 @@ object FilePicker {
 
     private fun getPickIntent(MIMEType: Int): Intent? {
         return when (MIMEType) {
+            OPEN_CAMERA_FOR_PHOTO -> Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+            OPEN_CAMERA_FOR_VIDEO -> Intent(android.provider.MediaStore.ACTION_VIDEO_CAPTURE)
             IMAGE_TYPE -> Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             VIDEO_TYPE -> Intent(Intent.ACTION_PICK, android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
             AUDIO_TYPE -> Intent(Intent.ACTION_PICK, android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
